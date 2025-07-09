@@ -17,6 +17,9 @@ import signal
 import torch.serialization
 import torch.optim
 
+import nltk
+nltk.download('punkt_tab', quiet=True)
+
 app = FastAPI(title="StyleTTS2 TTS API")
 
 # Setup logging
