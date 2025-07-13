@@ -38,10 +38,19 @@ RUN conda install -c conda-forge python-crfsuite -y
 # Download NLTK data (required by StyleTTS2)
 RUN python -c "import nltk; nltk.download('punkt_tab', quiet=True)"
 
-# Pre-download the StyleTTS2 model during build time
-# This ensures the model is cached in the Docker image and doesn't need to be downloaded at runtime
-# Note: Model files should be available in the StyleTTS2-LibriTTS directory
-RUN python -c "import os; print('Checking model files...'); print('Model checkpoint exists:', os.path.exists('StyleTTS2-LibriTTS/Models/LibriTTS/epoch_2nd_00012.pth')); print('Config exists:', os.path.exists('StyleTTS2-LibriTTS/Models/LibriTTS/config_vokan.yml'))"
+# Download StyleTTS2 model files if they don't exist
+RUN mkdir -p StyleTTS2-LibriTTS/Models/LibriTTS && \
+    if [ ! -f "StyleTTS2-LibriTTS/Models/LibriTTS/epoch_2nd_00012.pth" ]; then \
+        echo "Downloading StyleTTS2 model checkpoint..."; \
+        wget -O StyleTTS2-LibriTTS/Models/LibriTTS/epoch_2nd_00012.pth https://huggingface.co/ShoukanLabs/Vokan/resolve/main/Model/epoch_2nd_00012.pth?download=true; \
+    fi && \
+    if [ ! -f "StyleTTS2-LibriTTS/Models/LibriTTS/config_vokan.yml" ]; then \
+        echo "Downloading StyleTTS2 config file..."; \
+        wget -O StyleTTS2-LibriTTS/Models/LibriTTS/config_vokan.yml https://huggingface.co/ShoukanLabs/Vokan/resolve/main/Model/config.yml?download=true; \
+    fi
+
+# Verify model files are downloaded
+RUN python -c "import os; print('Model files check:'); print('Checkpoint exists:', os.path.exists('StyleTTS2-LibriTTS/Models/LibriTTS/epoch_2nd_00012.pth')); print('Config exists:', os.path.exists('StyleTTS2-LibriTTS/Models/LibriTTS/config_vokan.yml'))"
 
 # Expose the port the server will run on (port 8013 as specified in server.py)
 EXPOSE 8013
